@@ -1,114 +1,35 @@
-import * as React from "react";
+import { useState, useEffect } from "react";
+import EditToolbar from "./EditToolbar";
+import { Axios } from "../utils/axiosInstance";
+
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
+
 import {
-  GridRowsProp,
   GridRowModesModel,
   GridRowModes,
   DataGrid,
   GridColDef,
-  GridToolbarContainer,
   GridActionsCellItem,
   GridEventListener,
   GridRowId,
   GridRowModel,
   GridRowEditStopReasons,
 } from "@mui/x-data-grid";
-import {
-  randomCreatedDate,
-  randomTraderName,
-  randomId,
-  randomArrayItem,
-} from "@mui/x-data-grid-generator";
 
-const roles = ["Market", "Finance", "Development"];
-const randomRole = () => {
-  return randomArrayItem(roles);
-};
-
-const initialRows: GridRowsProp = [
-  {
-    id: randomId(),
-    name: randomTraderName(),
-    age: 25,
-    joinDate: randomCreatedDate(),
-    role: randomRole(),
-  },
-  {
-    id: randomId(),
-    name: randomTraderName(),
-    age: 36,
-    joinDate: randomCreatedDate(),
-    role: randomRole(),
-  },
-  {
-    id: randomId(),
-    name: randomTraderName(),
-    age: 19,
-    joinDate: randomCreatedDate(),
-    role: randomRole(),
-  },
-  {
-    id: randomId(),
-    name: randomTraderName(),
-    age: 28,
-    joinDate: randomCreatedDate(),
-    role: randomRole(),
-  },
-  {
-    id: randomId(),
-    name: randomTraderName(),
-    age: 23,
-    joinDate: randomCreatedDate(),
-    role: randomRole(),
-  },
-];
-
-interface EditToolbarProps {
-  setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void;
-  setRowModesModel: (
-    newModel: (oldModel: GridRowModesModel) => GridRowModesModel
-  ) => void;
-}
-
-function EditToolbar(props: EditToolbarProps) {
-  const { setRows, setRowModesModel } = props;
-
-  const handleClick = () => {
-    const id = randomId();
-    setRows((oldRows) => [...oldRows, { id, name: "", age: "", isNew: true }]);
-    setRowModesModel((oldModel) => ({
-      ...oldModel,
-      [id]: { mode: GridRowModes.Edit, fieldToFocus: "name" },
-    }));
-  };
-
-  return (
-    <GridToolbarContainer>
-      <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
-        Add record
-      </Button>
-    </GridToolbarContainer>
-  );
-}
-
-export default function FullCrudDataGrid() {
-  const [rows, setRows] = React.useState(initialRows);
-  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
-    {}
-  );
+const FullCrudDataGrid = () => {
+  const [rows, setRows] = useState<any>([]);
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
     event
   ) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-      event.defaultMuiPrevented = true;
+      event.defaultMuiPrevented = false;
     }
   };
 
@@ -121,7 +42,7 @@ export default function FullCrudDataGrid() {
   };
 
   const handleDeleteClick = (id: GridRowId) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+    setRows(rows.filter((row: any) => row.id !== id));
   };
 
   const handleCancelClick = (id: GridRowId) => () => {
@@ -130,15 +51,17 @@ export default function FullCrudDataGrid() {
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
 
-    const editedRow = rows.find((row) => row.id === id);
+    const editedRow = rows.find((row: any) => row.id === id);
     if (editedRow!.isNew) {
-      setRows(rows.filter((row) => row.id !== id));
+      setRows(rows.filter((row: any) => row.id !== id));
     }
   };
 
-  const processRowUpdate = (newRow: GridRowModel) => {
+  const processRowUpdate = async (newRow: GridRowModel) => {
+    await Axios.put(`api/traders/${newRow.id}`, newRow);
+
     const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+    setRows(rows.map((row: any) => (row.id === newRow.id ? updatedRow : row)));
     return updatedRow;
   };
 
@@ -163,6 +86,7 @@ export default function FullCrudDataGrid() {
       type: "date",
       width: 180,
       editable: true,
+      valueGetter: (params) => new Date(params.value),
     },
     {
       field: "role",
@@ -170,7 +94,7 @@ export default function FullCrudDataGrid() {
       width: 220,
       editable: true,
       type: "singleSelect",
-      valueOptions: ["Market", "Finance", "Development"],
+      valueOptions: ["개발자", "의사", "학생", "매니저"],
     },
     {
       field: "actions",
@@ -220,6 +144,22 @@ export default function FullCrudDataGrid() {
     },
   ];
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await Axios.get("api/traders");
+      const newData = response.data.map((x: any) => {
+        const { _id, ...data } = x;
+        const datas = { id: _id, ...data };
+        return datas;
+      });
+
+      setRows(newData);
+      return response.data;
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <Box
       sx={{
@@ -241,13 +181,14 @@ export default function FullCrudDataGrid() {
         onRowModesModelChange={handleRowModesModelChange}
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
-        slots={{
-          toolbar: EditToolbar,
-        }}
+        slots={{ toolbar: EditToolbar }}
         slotProps={{
-          toolbar: { setRows, setRowModesModel },
+          toolbar: { setRows, setRowModesModel, rows, rowModesModel },
         }}
+        getRowId={(row) => row.id}
       />
     </Box>
   );
-}
+};
+
+export default FullCrudDataGrid;
