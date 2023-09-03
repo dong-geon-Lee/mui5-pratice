@@ -17,6 +17,7 @@ import {
   GridRowId,
   GridRowModel,
   GridRowEditStopReasons,
+  GridToolbar,
 } from "@mui/x-data-grid";
 
 const FullCrudDataGrid = () => {
@@ -213,6 +214,15 @@ const FullCrudDataGrid = () => {
     "& .textPrimary": {
       color: "text.primary",
     },
+
+    ".css-1knaqv7-MuiButtonBase-root-MuiButton-root + button": {
+      display: "none",
+    },
+
+    ".css-v4u5dn-MuiInputBase-root-MuiInput-root": {
+      marginLeft: "auto",
+      width: "100%",
+    },
   };
 
   useEffect(() => {
@@ -251,6 +261,15 @@ const FullCrudDataGrid = () => {
         onRowModesModelChange={handleRowModesModelChange}
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
+        disableColumnFilter
+        disableColumnSelector
+        // slots={{
+        //   toolbar: () => (
+        //     <div style={{ width: "100%" }}>
+        //       <GridToolbar />
+        //     </div>
+        //   ),
+        // }}
         slots={{ toolbar: EditToolbar }}
         slotProps={{
           toolbar: {
@@ -258,6 +277,7 @@ const FullCrudDataGrid = () => {
             setRowModesModel,
             handleAllDelete,
             handleEditClick,
+            showQuickFilter: true,
           },
         }}
         checkboxSelection
