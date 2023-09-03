@@ -4,7 +4,6 @@ import EditToolbar from "./EditToolbar";
 
 import Box from "@mui/material/Box";
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
 
@@ -25,32 +24,83 @@ const FullCrudDataGrid = () => {
   const [rowModesModel, setRowModesModel] = useState<any>({});
 
   const [rowSelectionModel, setRowSelectionModel] = useState<any>([]);
-  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectedRows, setSelectedRows] = useState<any>([]);
 
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
     event
   ) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-      event.defaultMuiPrevented = true;
+      event.defaultMuiPrevented = false;
     }
   };
 
   const handleEditClick = (id: GridRowId) => () => {
+    console.log(rowSelectionModel);
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+    // 선택된 행의 ID 목록
   };
 
   const handleSaveClick = (id: GridRowId) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
-  const handleDeleteClick = (id: GridRowId | any) => () => {
-    const handleDelete = async () => {
-      await Axios.delete(`api/traders/${id}`);
-    };
+  // const handleDeleteClick = (id: GridRowId | any) => () => {
+  //   const handleDelete = async () => {
+  //     try {
+  //       await Axios.delete(`api/traders/${id}`);
+  //     } catch (error) {
+  //       console.error("Error deleting data:", error);
+  //     }
+  //   };
 
-    handleDelete();
-    setRows(rows.filter((row: any) => row.id !== id));
+  //   handleDelete();
+  //   setRows(rows.filter((row: any) => row.id !== id));
+  // };
+
+  const handleAllDelete = async () => {
+    const selectedIds = Object.keys(selectedRows);
+
+    if (selectedIds.length === 0) {
+      alert("선택된 행이 없습니다.");
+      return;
+    }
+
+    if (selectedIds.length === 1) {
+      try {
+        await Axios.delete(`api/traders/${selectedIds[0]}`);
+        const response = await Axios.get("api/traders");
+        const newData = response.data.map((x: any) => {
+          const { _id: id, ...data } = x;
+          return { id, ...data };
+        });
+
+        setRows(newData);
+      } catch (error) {
+        console.log(error);
+      }
+
+      return;
+    }
+
+    Promise.all(
+      selectedRows?.map(async (id: any) => {
+        try {
+          await Axios.delete(`api/traders/${id}`);
+        } catch (error) {
+          console.error("Error deleting data:", error);
+        }
+      })
+    )
+      .then(() => {
+        setRows((prevRows: any) =>
+          prevRows.filter((row: any) => !selectedRows.includes(row.id))
+        );
+        setSelectedRows([]);
+      })
+      .catch((error: any) => {
+        console.log("Error", error);
+      });
   };
 
   const handleCancelClick = (id: GridRowId) => () => {
@@ -143,12 +193,12 @@ const FullCrudDataGrid = () => {
             onClick={handleEditClick(params.id)}
             color="inherit"
           />,
-          <GridActionsCellItem
-            icon={<DeleteIcon />}
-            label="Delete"
-            onClick={handleDeleteClick(params.id)}
-            color="inherit"
-          />,
+          // <GridActionsCellItem
+          //   icon={<DeleteIcon />}
+          //   label="Delete"
+          //   onClick={handleDeleteClick(params.id)}
+          //   color="inherit"
+          // />,
         ];
       },
     },
@@ -174,18 +224,22 @@ const FullCrudDataGrid = () => {
       });
 
       setRows(newData);
-      return response.data;
     };
 
     fetchData();
   }, []);
 
   useEffect(() => {
-    setRowSelectionModel(rows[0]?.id);
-    setSelectedRows(rows[0]);
-  }, [rows[0]]);
+    if (rows.length > 0) {
+      setRowSelectionModel([rows[0].id]);
+      setSelectedRows({ [rows[0].id]: true });
+    } else {
+      setRowSelectionModel([]);
+      setSelectedRows([]);
+    }
+  }, [rows]);
 
-  console.log(selectedRows);
+  console.log(selectedRows, rowSelectionModel);
 
   return (
     <Box sx={sxStyles}>
@@ -198,17 +252,22 @@ const FullCrudDataGrid = () => {
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
         slots={{ toolbar: EditToolbar }}
-        slotProps={{ toolbar: { setRows, setRowModesModel } }}
-        checkboxSelection={false}
+        slotProps={{
+          toolbar: {
+            setRows,
+            setRowModesModel,
+            handleAllDelete,
+            handleEditClick,
+          },
+        }}
+        checkboxSelection
+        disableRowSelectionOnClick
         rowSelectionModel={rowSelectionModel}
         onRowSelectionModelChange={(newRowSelectionModel) => {
-          const selectedIDs = new Set(newRowSelectionModel);
-          const [selectedRowData] = rows.filter((r: any) =>
-            selectedIDs.has(r.id)
-          );
-          setRowSelectionModel(selectedRowData.id);
-          setSelectedRows(selectedRowData);
+          setSelectedRows(newRowSelectionModel);
+          setRowSelectionModel(newRowSelectionModel);
         }}
+        hideFooterPagination
       />
     </Box>
   );

@@ -10,16 +10,18 @@ import {
 
 import { useState } from "react";
 import { Axios } from "../utils/axiosInstance";
+import { Delete } from "@mui/icons-material";
 
 interface EditToolbarProps {
   setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void;
   setRowModesModel: (
     newModel: (oldModel: GridRowModesModel) => GridRowModesModel
   ) => void;
+  handleAllDelete: any;
 }
 
 const EditToolbar = (props: EditToolbarProps) => {
-  const { setRows, setRowModesModel } = props;
+  const { setRows, setRowModesModel, handleAllDelete } = props;
   const [userData] = useState<any>({
     name: "",
     age: "",
@@ -40,6 +42,9 @@ const EditToolbar = (props: EditToolbarProps) => {
     <GridToolbarContainer>
       <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
         등록하기
+      </Button>
+      <Button color="primary" startIcon={<Delete />} onClick={handleAllDelete}>
+        삭제하기
       </Button>
     </GridToolbarContainer>
   );
