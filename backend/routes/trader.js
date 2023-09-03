@@ -8,7 +8,9 @@ const {
   deleteTrader,
 } = require("../controller/trader");
 
-router.post("/traders", createTrader);
-router.get("/traders", readTrader);
-router.put("/traders/:id", updateTrader);
-router.delete("/traders/:id", deleteTrader);
+router.post("/", createTrader);
+router.get("/", readTrader);
+router.put("/:id", updateTrader);
+router.delete("/:id", deleteTrader);
+
+module.exports = router;

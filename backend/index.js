@@ -13,8 +13,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+app.use("/api/traders", require("./routes/trader"));
+
 app.get("/", (req, res) => {
-  res.json({ message: "안녕하신가?" });
+  res.json({ message: "sorry" });
 });
 
 app.listen(port, () => console.log(`Server Running ${port}`));
