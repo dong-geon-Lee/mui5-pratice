@@ -22,7 +22,10 @@ import {
 
 const FullCrudDataGrid = () => {
   const [rows, setRows] = useState<any>([]);
-  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const [rowModesModel, setRowModesModel] = useState<any>({});
+
+  const [rowSelectionModel, setRowSelectionModel] = useState<any>([]);
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
@@ -108,8 +111,9 @@ const FullCrudDataGrid = () => {
       headerName: "Actions",
       width: 100,
       cellClassName: "actions",
-      getActions: ({ id }) => {
-        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+      getActions: (params) => {
+        const isInEditMode =
+          rowModesModel[params.id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
           return [
@@ -119,13 +123,13 @@ const FullCrudDataGrid = () => {
               sx={{
                 color: "primary.main",
               }}
-              onClick={handleSaveClick(id)}
+              onClick={handleSaveClick(params.id)}
             />,
             <GridActionsCellItem
               icon={<CancelIcon />}
               label="Cancel"
               className="textPrimary"
-              onClick={handleCancelClick(id)}
+              onClick={handleCancelClick(params.id)}
               color="inherit"
             />,
           ];
@@ -136,13 +140,13 @@ const FullCrudDataGrid = () => {
             icon={<EditIcon />}
             label="Edit"
             className="textPrimary"
-            onClick={handleEditClick(id)}
+            onClick={handleEditClick(params.id)}
             color="inherit"
           />,
           <GridActionsCellItem
             icon={<DeleteIcon />}
             label="Delete"
-            onClick={handleDeleteClick(id)}
+            onClick={handleDeleteClick(params.id)}
             color="inherit"
           />,
         ];
@@ -176,6 +180,13 @@ const FullCrudDataGrid = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    setRowSelectionModel(rows[0]?.id);
+    setSelectedRows(rows[0]);
+  }, [rows[0]]);
+
+  console.log(selectedRows);
+
   return (
     <Box sx={sxStyles}>
       <DataGrid
@@ -188,6 +199,16 @@ const FullCrudDataGrid = () => {
         processRowUpdate={processRowUpdate}
         slots={{ toolbar: EditToolbar }}
         slotProps={{ toolbar: { setRows, setRowModesModel } }}
+        checkboxSelection={false}
+        rowSelectionModel={rowSelectionModel}
+        onRowSelectionModelChange={(newRowSelectionModel) => {
+          const selectedIDs = new Set(newRowSelectionModel);
+          const [selectedRowData] = rows.filter((r: any) =>
+            selectedIDs.has(r.id)
+          );
+          setRowSelectionModel(selectedRowData.id);
+          setSelectedRows(selectedRowData);
+        }}
       />
     </Box>
   );

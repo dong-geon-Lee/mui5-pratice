@@ -39,7 +39,7 @@ const EditToolbar = (props: EditToolbarProps) => {
   return (
     <GridToolbarContainer>
       <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
-        Add record
+        등록하기
       </Button>
     </GridToolbarContainer>
   );
