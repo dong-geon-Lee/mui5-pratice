@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import EditToolbar from "./EditToolbar";
 import { Axios } from "../utils/axiosInstance";
+import EditToolbar from "./EditToolbar";
 
 import Box from "@mui/material/Box";
 import EditIcon from "@mui/icons-material/Edit";
@@ -29,7 +29,7 @@ const FullCrudDataGrid = () => {
     event
   ) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-      event.defaultMuiPrevented = false;
+      event.defaultMuiPrevented = true;
     }
   };
 
@@ -41,7 +41,12 @@ const FullCrudDataGrid = () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
-  const handleDeleteClick = (id: GridRowId) => () => {
+  const handleDeleteClick = (id: GridRowId | any) => () => {
+    const handleDelete = async () => {
+      await Axios.delete(`api/traders/${id}`);
+    };
+
+    handleDelete();
     setRows(rows.filter((row: any) => row.id !== id));
   };
 
@@ -95,6 +100,7 @@ const FullCrudDataGrid = () => {
       editable: true,
       type: "singleSelect",
       valueOptions: ["개발자", "의사", "학생", "매니저"],
+      valueGetter: (params) => params.value || "",
     },
     {
       field: "actions",
@@ -164,7 +170,7 @@ const FullCrudDataGrid = () => {
     <Box
       sx={{
         height: 500,
-        width: "100%",
+        width: "60%",
         "& .actions": {
           color: "text.secondary",
         },
@@ -182,10 +188,7 @@ const FullCrudDataGrid = () => {
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
         slots={{ toolbar: EditToolbar }}
-        slotProps={{
-          toolbar: { setRows, setRowModesModel, rows, rowModesModel },
-        }}
-        getRowId={(row) => row.id}
+        slotProps={{ toolbar: { setRows, setRowModesModel } }}
       />
     </Box>
   );
