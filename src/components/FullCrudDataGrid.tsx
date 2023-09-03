@@ -150,13 +150,23 @@ const FullCrudDataGrid = () => {
     },
   ];
 
+  const sxStyles = {
+    height: 500,
+    width: "60%",
+    "& .actions": {
+      color: "text.secondary",
+    },
+    "& .textPrimary": {
+      color: "text.primary",
+    },
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const response = await Axios.get("api/traders");
       const newData = response.data.map((x: any) => {
-        const { _id, ...data } = x;
-        const datas = { id: _id, ...data };
-        return datas;
+        const { _id: id, ...data } = x;
+        return { id, ...data };
       });
 
       setRows(newData);
@@ -167,18 +177,7 @@ const FullCrudDataGrid = () => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        height: 500,
-        width: "60%",
-        "& .actions": {
-          color: "text.secondary",
-        },
-        "& .textPrimary": {
-          color: "text.primary",
-        },
-      }}
-    >
+    <Box sx={sxStyles}>
       <DataGrid
         rows={rows}
         columns={columns}
