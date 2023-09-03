@@ -4,18 +4,15 @@ const traderSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
     },
     age: {
-      type: Number,
-      required: true,
+      type: String,
     },
     joinDate: {
       type: Date,
     },
     role: {
       type: String,
-      required: true,
     },
   },
   { timestamps: true }
